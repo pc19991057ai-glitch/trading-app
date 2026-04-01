@@ -17,6 +17,7 @@ class BacktestResult:
     average_monthly_return: float
     sharpe_ratio: float
     halted_by_drawdown: bool
+    equity_curve: pd.Series
 
 
 def _apply_cost(price: float, bps: float, is_buy: bool) -> float:
@@ -123,7 +124,7 @@ def run_backtest(
     if equity_series.empty:
         equity_series = pd.Series([initial_capital], index=[frame.index[0]], dtype="float64")
 
-    return BacktestResult(
+    result = BacktestResult(
         symbol=symbol,
         trades=trades,
         ending_equity=float(equity),
@@ -131,5 +132,8 @@ def run_backtest(
         average_monthly_return=average_monthly_return(equity_series),
         sharpe_ratio=sharpe_ratio(equity_series),
         halted_by_drawdown=halted,
+        equity_curve=equity_series,
     )
+
+    return result
 
