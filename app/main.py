@@ -115,6 +115,23 @@ def index() -> str:
       const tbody = document.getElementById("results-body");
       let chart;
 
+      const crosshairPlugin = {
+        id: "crosshairLine",
+        afterDatasetsDraw(chart, args, pluginOptions) {
+          const { ctx, tooltip, chartArea } = chart;
+          if (!tooltip || !tooltip.getActiveElements().length) return;
+          const x = tooltip.getActiveElements()[0].element.x;
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(x, chartArea.top);
+          ctx.lineTo(x, chartArea.bottom);
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = "rgba(148, 163, 184, 0.7)";
+          ctx.stroke();
+          ctx.restore();
+        },
+      };
+
       async function loadDefaults() {
         try {
           const res = await fetch("/symbols");
@@ -169,15 +186,38 @@ def index() -> str:
           },
           options: {
             responsive: true,
+            interaction: {
+              mode: "index",
+              intersect: false,
+            },
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  title(items) {
+                    const raw = items[0].label;
+                    return raw;
+                  },
+                  label(item) {
+                    return `Equity: ${item.parsed.y.toFixed(2)}`;
+                  },
+                },
+              },
+              legend: {
+                labels: { color: "#e5e7eb" },
+              },
+            },
             scales: {
               x: {
                 ticks: { display: false },
+                grid: { display: false },
               },
               y: {
                 ticks: { color: "#cbd5f5" },
+                grid: { color: "rgba(30, 64, 175, 0.35)" },
               },
             },
           },
+          plugins: [crosshairPlugin],
         });
       }
 
