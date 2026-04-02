@@ -27,16 +27,33 @@ def index() -> str:
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>trading-app backtest UI</title>
+    <title>Trading Strategy Lab</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body class="bg-slate-950 text-slate-100 min-h-screen">
-    <div class="max-w-6xl mx-auto py-8 px-4">
-      <h1 class="text-3xl font-semibold mb-6">Trading Backtest Console</h1>
-      <div class="grid md:grid-cols-3 gap-6 mb-8">
-        <div class="md:col-span-2 space-y-4">
+    <div class="max-w-6xl mx-auto py-6 px-4 space-y-6">
+      <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div>
+          <h1 class="text-3xl font-semibold tracking-tight">Trading Strategy Lab</h1>
+          <p class="text-xs text-slate-400 mt-1">
+            Multi-asset backtesting with 1% risk per trade &amp; 15% max drawdown.
+          </p>
+        </div>
+        <div class="inline-flex items-center gap-3 text-xs text-slate-400">
+          <span class="inline-flex items-center gap-1">
+            <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Live on Zeabur
+          </span>
+          <span class="hidden md:inline">/</span>
+          <a href="https://github.com/pc19991057ai-glitch/trading-app" target="_blank" class="underline decoration-dotted decoration-slate-500 hover:text-slate-200">
+            View source on GitHub
+          </a>
+        </div>
+      </header>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="md:col-span-2 space-y-4 bg-slate-900/60 border border-slate-800 rounded-lg p-4">
           <div>
             <label class="block text-sm mb-1">Symbols (comma separated)</label>
             <input id="symbols-input" class="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-sm" placeholder="BTCUSDT,AAPL,QQQ" />
@@ -74,16 +91,44 @@ def index() -> str:
           </button>
           <p id="status" class="text-xs text-slate-400 mt-1"></p>
         </div>
-        <div class="space-y-2 text-xs bg-slate-900 border border-slate-800 rounded p-3">
-          <p class="font-semibold mb-1">Notes</p>
-          <ul class="list-disc pl-4 space-y-1">
-            <li>Historical backtest only, no live trading.</li>
-            <li>Risk per trade ≤ 1% of equity.</li>
-            <li>Max portfolio drawdown 15% halts new trades.</li>
-          </ul>
-        </div>
+        <aside class="space-y-3 text-xs">
+          <div class="bg-slate-900 border border-slate-800 rounded-lg p-3 space-y-2">
+            <p class="font-semibold mb-1">Risk framework</p>
+            <ul class="list-disc pl-4 space-y-1">
+              <li>Historical backtests only, no live trading.</li>
+              <li>Max risk per trade: <span class="font-mono">1%</span> of equity.</li>
+              <li>Max portfolio drawdown: <span class="font-mono">15%</span> (halts new trades).</li>
+            </ul>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 rounded-lg p-3 space-y-2">
+            <p class="font-semibold mb-1">How to use</p>
+            <ol class="list-decimal pl-4 space-y-1">
+              <li>Pick universe &amp; date range.</li>
+              <li>Tune risk / trade &amp; max DD.</li>
+              <li>Inspect equity curves, drawdowns &amp; trade stats.</li>
+            </ol>
+          </div>
+        </aside>
       </div>
-      <div class="bg-slate-900 border border-slate-800 rounded p-4 mb-6 overflow-x-auto">
+      <section class="grid md:grid-cols-3 gap-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-lg p-4 space-y-1">
+          <p class="text-xs uppercase tracking-wide text-slate-400">Portfolio</p>
+          <p id="summary-equity" class="text-xl font-semibold">–</p>
+          <p class="text-[11px] text-slate-400">Ending equity (first symbol)</p>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-lg p-4 space-y-1">
+          <p class="text-xs uppercase tracking-wide text-slate-400">Avg monthly</p>
+          <p id="summary-monthly" class="text-xl font-semibold">–</p>
+          <p class="text-[11px] text-slate-400">Average monthly return</p>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-lg p-4 space-y-1">
+          <p class="text-xs uppercase tracking-wide text-slate-400">Max drawdown</p>
+          <p id="summary-dd" class="text-xl font-semibold">–</p>
+          <p class="text-[11px] text-slate-400">Worst peak-to-trough loss</p>
+        </div>
+      </section>
+      <div class="bg-slate-900 border border-slate-800 rounded-lg p-4 overflow-x-auto">
+        <p class="text-sm font-medium mb-3">Asset metrics</p>
         <table class="min-w-full text-xs" id="results-table">
           <thead class="text-slate-300 border-b border-slate-800">
             <tr>
@@ -99,9 +144,15 @@ def index() -> str:
           <tbody id="results-body" class="divide-y divide-slate-800"></tbody>
         </table>
       </div>
-      <div class="bg-slate-900 border border-slate-800 rounded p-4">
-        <h2 class="text-sm font-medium mb-3">Equity curve (first symbol)</h2>
-        <canvas id="equity-chart" height="120"></canvas>
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="md:col-span-2 bg-slate-900 border border-slate-800 rounded-lg p-4">
+          <h2 class="text-sm font-medium mb-3">Equity curve (first symbol)</h2>
+          <canvas id="equity-chart" height="140"></canvas>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-lg p-4">
+          <h2 class="text-sm font-medium mb-3">Drawdown (first symbol)</h2>
+          <canvas id="dd-chart" height="140"></canvas>
+        </div>
       </div>
     </div>
     <script>
@@ -113,7 +164,11 @@ def index() -> str:
       const ddInput = document.getElementById("dd-input");
       const statusEl = document.getElementById("status");
       const tbody = document.getElementById("results-body");
+      const summaryEquity = document.getElementById("summary-equity");
+      const summaryMonthly = document.getElementById("summary-monthly");
+      const summaryDD = document.getElementById("summary-dd");
       let chart;
+      let ddChart;
 
       const crosshairPlugin = {
         id: "crosshairLine",
@@ -159,7 +214,19 @@ def index() -> str:
         }
       }
 
-      function renderChart(results) {
+      function updateSummary(first) {
+        if (!first) {
+          summaryEquity.textContent = "–";
+          summaryMonthly.textContent = "–";
+          summaryDD.textContent = "–";
+          return;
+        }
+        summaryEquity.textContent = first.ending_equity.toFixed(2);
+        summaryMonthly.textContent = (first.average_monthly_return * 100).toFixed(2) + "%";
+        summaryDD.textContent = (first.max_drawdown * 100).toFixed(2) + "%";
+      }
+
+      function renderCharts(results) {
         const first = results[0];
         if (!first || !first.equity_curve) {
           return;
@@ -170,6 +237,18 @@ def index() -> str:
         if (chart) {
           chart.destroy();
         }
+        if (ddChart) {
+          ddChart.destroy();
+        }
+
+        const ddValues = (() => {
+          let peak = values[0] || 0;
+          return values.map((v) => {
+            if (v > peak) peak = v;
+            return (v - peak) / peak;
+          });
+        })();
+
         chart = new Chart(ctx, {
           type: "line",
           data: {
@@ -219,6 +298,45 @@ def index() -> str:
           },
           plugins: [crosshairPlugin],
         });
+
+        const ddCtx = document.getElementById("dd-chart").getContext("2d");
+        ddChart = new Chart(ddCtx, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: first.symbol + " drawdown",
+                data: ddValues.map((v) => v * 100),
+                borderColor: "rgb(239, 68, 68)",
+                borderWidth: 2,
+                pointRadius: 0,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            interaction: { mode: "index", intersect: false },
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label(item) {
+                    return `Drawdown: ${item.parsed.y.toFixed(2)}%`;
+                  },
+                },
+              },
+              legend: { labels: { color: "#e5e7eb" } },
+            },
+            scales: {
+              x: { ticks: { display: false }, grid: { display: false } },
+              y: {
+                ticks: { color: "#cbd5f5" },
+                grid: { color: "rgba(127, 29, 29, 0.45)" },
+              },
+            },
+          },
+          plugins: [crosshairPlugin],
+        });
       }
 
       document.getElementById("run-btn").addEventListener("click", async () => {
@@ -255,7 +373,8 @@ def index() -> str:
           }
           const data = await res.json();
           renderTable(data.results);
-          renderChart(data.results);
+          updateSummary(data.results[0]);
+          renderCharts(data.results);
           statusEl.textContent = "Done.";
         } catch (e) {
           console.error(e);
